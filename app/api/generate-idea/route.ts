@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { kv } from "@vercel/kv";
+
+const DAILY_LIMIT = 3;
 
 const systemPrompt = `YOU ARE AN AWARD-WINNING EXPERT IN PROJECT MANAGEMENT AND SOFTWARE DEVELOPMENT, SPECIALIZING IN CREATING TAILORED, DETAILED PROJECT PLANS THAT TURN USER INPUT INTO SUCCESSFUL OUTCOMES. 
 
@@ -66,14 +69,45 @@ const systemPrompt = `YOU ARE AN AWARD-WINNING EXPERT IN PROJECT MANAGEMENT AND 
 - **NEVER** provide generic or unrealistic timelines.
 - **NEVER** overlook potential challenges or fail to provide proactive solutions.`;
 
+async function getUserGenerationCount(userId: string): Promise<number> {
+  const key = `user:${userId}:generations:${
+    new Date().toISOString().split("T")[0]
+  }`;
+  const count = (await kv.get(key)) as number;
+  return count || 0;
+}
+
+async function incrementUserGenerationCount(userId: string): Promise<void> {
+  const key = `user:${userId}:generations:${
+    new Date().toISOString().split("T")[0]
+  }`;
+  await kv.incr(key);
+  await kv.expire(key, 86400); // Set to expire after 24 hours
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { projectIdea } = body;
+    const { projectIdea, userId } = body;
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "User ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const currentCount = await getUserGenerationCount(userId);
+    if (currentCount >= DAILY_LIMIT) {
+      return NextResponse.json(
+        { error: "Daily generation limit reached" },
+        { status: 429 }
+      );
+    }
 
     const apiUrl = "https://api.groq.com/openai/v1/chat/completions";
     const requestBody = {
-      model: "llama-3.2-90b-text-preview", // Fixed model
+      model: "llama-3.2-90b-text-preview",
       messages: [
         { role: "system", content: systemPrompt },
         {
@@ -108,7 +142,12 @@ export async function POST(request: NextRequest) {
     const data = await response.json();
     const generatedText = data.choices[0].message.content;
 
-    return NextResponse.json({ generatedText });
+    await incrementUserGenerationCount(userId);
+
+    return NextResponse.json({
+      generatedText,
+      remainingGenerations: DAILY_LIMIT - currentCount - 1,
+    });
   } catch (error) {
     console.error("Error in API route:", error);
     return NextResponse.json(

@@ -18,7 +18,7 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "AI Project Idea Generator",
   description:
-    "AI Project Idea Generator,Enter your project idea and let AI expand on it",
+    "AI Project Idea Generator, Enter your project idea and let AI expand on it",
 };
 
 export default function RootLayout({

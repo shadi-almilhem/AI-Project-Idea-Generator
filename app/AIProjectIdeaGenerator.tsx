@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -18,8 +18,27 @@ const AIProjectIdeaGenerator = () => {
   const [projectIdea, setProjectIdea] = useState("");
   const [generatedIdea, setGeneratedIdea] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [remainingGenerations, setRemainingGenerations] = useState(3);
+  const [userId, setUserId] = useState("");
+
+  useEffect(() => {
+    // Generate a simple user ID or retrieve from local storage
+    const storedUserId = localStorage.getItem("userId");
+    if (storedUserId) {
+      setUserId(storedUserId);
+    } else {
+      const newUserId = `user_${Math.random().toString(36).substr(2, 9)}`;
+      localStorage.setItem("userId", newUserId);
+      setUserId(newUserId);
+    }
+  }, []);
 
   const handleSubmit = useCallback(async () => {
+    if (remainingGenerations <= 0) {
+      toast.error("Daily generation limit reached. Please try again tomorrow.");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const response = await fetch("/api/generate-idea", {
@@ -27,52 +46,44 @@ const AIProjectIdeaGenerator = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ projectIdea }),
+        body: JSON.stringify({ projectIdea, userId }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to generate idea");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to generate idea");
       }
 
       const data = await response.json();
       setGeneratedIdea(data.generatedText);
+      setRemainingGenerations(data.remainingGenerations);
 
-      toast.success("Idea Generated", {
-        duration: 2000,
-        position: "top-center",
-
-        // Styling
-
-        // Custom Icon
-        icon: "✅",
-
-        // Change colors of success/error/loading icon
-      });
+      toast.success(
+        `Idea Generated. ${data.remainingGenerations} generations left today.`,
+        {
+          duration: 2000,
+          position: "top-center",
+          icon: "✅",
+        }
+      );
     } catch (error) {
       console.error("Error generating project idea:", error);
       setGeneratedIdea(
         "An error occurred while generating the project idea. Please try again."
       );
 
-      toast.error("Failed to generate idea. Please try again.", {
-        duration: 4000,
-        position: "top-center",
-
-        // Styling
-
-        // Custom Icon
-        icon: "❌",
-
-        // Change colors of success/error/loading icon
-        iconTheme: {
-          primary: "#000",
-          secondary: "#fff",
-        },
-      });
+      toast.error(
+        error.message || "Failed to generate idea. Please try again.",
+        {
+          duration: 4000,
+          position: "top-center",
+          icon: "❌",
+        }
+      );
     } finally {
       setIsLoading(false);
     }
-  }, [projectIdea]);
+  }, [projectIdea, userId, remainingGenerations]);
 
   const handleClear = useCallback(() => {
     setProjectIdea("");
@@ -123,7 +134,7 @@ const AIProjectIdeaGenerator = () => {
         <div className="flex space-x-2">
           <Button
             onClick={handleSubmit}
-            disabled={isLoading || !projectIdea}
+            disabled={isLoading || !projectIdea || remainingGenerations <= 0}
             className="flex-1"
           >
             {isLoading ? (
@@ -134,7 +145,7 @@ const AIProjectIdeaGenerator = () => {
             ) : (
               <>
                 <Sparkles className="mr-2 h-4 w-4" />
-                Generate Idea
+                Generate Idea ({remainingGenerations} left)
               </>
             )}
           </Button>

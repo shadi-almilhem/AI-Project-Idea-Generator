@@ -67,7 +67,7 @@ const systemPrompt = `YOU ARE AN AWARD-WINNING EXPERT IN PROJECT MANAGEMENT AND 
 ###WHAT NOT TO DO###
 - **NEVER** create plans without fully understanding the user's input.
 - **NEVER** provide generic or unrealistic timelines.
-- **NEVER** overlook potential challenges or fail to provide proactive solutions.`;
+- **NEVER** overlook potential challenges or fail to provide proactive solutions.`; // Your existing system prompt here
 
 async function getUserGenerationCount(userId: string): Promise<number> {
   const key = `user:${userId}:generations:${
@@ -98,9 +98,11 @@ export async function POST(request: NextRequest) {
     }
 
     const currentCount = await getUserGenerationCount(userId);
-    if (currentCount >= DAILY_LIMIT) {
+    const remainingGenerations = Math.max(0, DAILY_LIMIT - currentCount);
+
+    if (remainingGenerations <= 0) {
       return NextResponse.json(
-        { error: "Daily generation limit reached" },
+        { error: "Daily generation limit reached", remainingGenerations: 0 },
         { status: 429 }
       );
     }
@@ -146,7 +148,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       generatedText,
-      remainingGenerations: DAILY_LIMIT - currentCount - 1,
+      remainingGenerations: remainingGenerations - 1,
     });
   } catch (error) {
     console.error("Error in API route:", error);

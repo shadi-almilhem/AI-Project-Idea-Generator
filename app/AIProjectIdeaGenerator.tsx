@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,7 +21,6 @@ const AIProjectIdeaGenerator = () => {
   const [userId, setUserId] = useState("");
 
   useEffect(() => {
-    // Generate a simple user ID or retrieve from local storage
     const storedUserId = localStorage.getItem("userId");
     if (storedUserId) {
       setUserId(storedUserId);
@@ -49,12 +47,12 @@ const AIProjectIdeaGenerator = () => {
         body: JSON.stringify({ projectIdea, userId }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to generate idea");
+        throw new Error(data.error || "Failed to generate idea");
       }
 
-      const data = await response.json();
       setGeneratedIdea(data.generatedText);
       setRemainingGenerations(data.remainingGenerations);
 
@@ -80,6 +78,11 @@ const AIProjectIdeaGenerator = () => {
           icon: "❌",
         }
       );
+
+      // If the error is due to reaching the generation limit, update the remaining generations
+      if (error.message === "Daily generation limit reached") {
+        setRemainingGenerations(0);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -92,28 +95,15 @@ const AIProjectIdeaGenerator = () => {
 
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(generatedIdea);
-
     toast("Generated idea copied to clipboard!", {
       duration: 4000,
       position: "top-center",
-
-      // Styling
-
-      // Custom Icon
       icon: "📝",
-
-      // Change colors of success/error/loading icon
-      iconTheme: {
-        primary: "#000",
-        secondary: "#fff",
-      },
     });
   }, [generatedIdea]);
 
   const formatText = (text: string) => {
-    // Replace **text** with <strong>text</strong>
-    const formattedText = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-    return formattedText;
+    return text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
   };
 
   return (
@@ -142,6 +132,11 @@ const AIProjectIdeaGenerator = () => {
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Generating...
               </>
+            ) : remainingGenerations <= 0 ? (
+              <>
+                <Sparkles className="mr-2 h-4 w-4" />
+                No generations left today
+              </>
             ) : (
               <>
                 <Sparkles className="mr-2 h-4 w-4" />
@@ -164,7 +159,7 @@ const AIProjectIdeaGenerator = () => {
           <div className="mt-4 w-full">
             <h3 className="font-bold mb-2 text-lg">Generated Idea:</h3>
             <div
-              className="w-full h-[200px]  mb-4 p-2 border rounded overflow-y-scroll"
+              className="w-full h-[200px] mb-4 p-2 border rounded overflow-y-scroll"
               style={{ whiteSpace: "pre-wrap" }}
               dangerouslySetInnerHTML={{ __html: formatText(generatedIdea) }}
             />

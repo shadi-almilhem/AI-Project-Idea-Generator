@@ -73,9 +73,8 @@ const AIProjectIdeaGenerator = () => {
       toast.success(
         `Idea Generated. ${data.remainingGenerations} generations left today.`,
         {
-          duration: 2000,
+          duration: 3000,
           position: "top-center",
-          icon: "✅",
         }
       );
     } catch (error) {
@@ -89,7 +88,6 @@ const AIProjectIdeaGenerator = () => {
         {
           duration: 4000,
           position: "top-center",
-          icon: "❌",
         }
       );
 
@@ -112,7 +110,6 @@ const AIProjectIdeaGenerator = () => {
     toast("Generated idea copied to clipboard!", {
       duration: 4000,
       position: "top-center",
-      icon: "📝",
     });
   }, [generatedIdea]);
 
@@ -173,7 +170,7 @@ const AIProjectIdeaGenerator = () => {
           <div className="mt-4 w-full">
             <h3 className="font-bold mb-2 text-lg">Generated Idea:</h3>
             <div
-              className="w-full h-[200px] mb-4 p-2 border rounded overflow-y-scroll"
+              className="w-full h-[190px] mb-4 p-2 border rounded overflow-y-scroll"
               style={{ whiteSpace: "pre-wrap" }}
               dangerouslySetInnerHTML={{ __html: formatText(generatedIdea) }}
             />

@@ -18,7 +18,7 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "AI Project Idea Generator",
   description:
-    "AI Project Idea Generator, Enter your project idea and let AI expand on it",
+    "AI Project Idea Generator is a tool designed to help you brainstorm and expand on your project ideas using artificial intelligence. Simply enter your initial idea, and the AI will provide you with detailed suggestions, potential improvements, and innovative angles to explore. Perfect for students, developers, and anyone looking to spark creativity and innovation.\nMade by Shadi Al Milhem",
 };
 
 export default function RootLayout({

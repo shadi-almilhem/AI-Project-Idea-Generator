@@ -89,7 +89,6 @@ async function incrementUserGenerationCount(userId: string): Promise<void> {
   await kv.incr(key);
   await kv.expire(key, 86400); // Set to expire after 24 hours
 }
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();

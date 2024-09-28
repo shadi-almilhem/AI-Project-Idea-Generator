@@ -74,34 +74,33 @@ const systemPrompt = `YOU ARE AN EXPERT IN PROJECT MANAGEMENT AND SOFTWARE DEVEL
 - **NEVER** overlook challenges students might face, such as limited resources or time.
 `;
 
-async function getUserGenerationCount(userId: string): Promise<number> {
-  const key = `user:${userId}:generations:${
-    new Date().toISOString().split("T")[0]
-  }`;
+async function getIPGenerationCount(ip: string): Promise<number> {
+  const key = `ip:${ip}:generations:${new Date().toISOString().split("T")[0]}`;
   const count = (await kv.get(key)) as number;
   return count || 0;
 }
 
-async function incrementUserGenerationCount(userId: string): Promise<void> {
-  const key = `user:${userId}:generations:${
-    new Date().toISOString().split("T")[0]
-  }`;
+async function incrementIPGenerationCount(ip: string): Promise<void> {
+  const key = `ip:${ip}:generations:${new Date().toISOString().split("T")[0]}`;
   await kv.incr(key);
   await kv.expire(key, 86400); // Set to expire after 24 hours
 }
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { projectIdea, userId } = body;
+    const { projectIdea } = body;
+    const ip =
+      request.ip || request.headers.get("x-forwarded-for") || "unknown";
 
-    if (!userId) {
+    if (ip === "unknown") {
       return NextResponse.json(
-        { error: "User ID is required" },
+        { error: "Unable to determine IP address" },
         { status: 400 }
       );
     }
 
-    const currentCount = await getUserGenerationCount(userId);
+    const currentCount = await getIPGenerationCount(ip);
     const remainingGenerations = Math.max(0, DAILY_LIMIT - currentCount);
 
     if (remainingGenerations <= 0) {
@@ -148,7 +147,7 @@ export async function POST(request: NextRequest) {
     const data = await response.json();
     const generatedText = data.choices[0].message.content;
 
-    await incrementUserGenerationCount(userId);
+    await incrementIPGenerationCount(ip);
 
     return NextResponse.json({
       generatedText,

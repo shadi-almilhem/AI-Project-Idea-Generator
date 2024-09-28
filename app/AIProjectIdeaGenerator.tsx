@@ -19,16 +19,14 @@ const AIProjectIdeaGenerator = () => {
   const [generatedIdea, setGeneratedIdea] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [remainingGenerations, setRemainingGenerations] = useState(3);
-  const [userId, setUserId] = useState("");
 
-  const fetchRemainingGenerations = useCallback(async (uid: string) => {
+  const fetchRemainingGenerations = useCallback(async () => {
     try {
       const response = await fetch("/api/check-limit", {
-        method: "POST",
+        method: "GET",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ userId: uid }),
       });
 
       if (!response.ok) {
@@ -44,16 +42,7 @@ const AIProjectIdeaGenerator = () => {
   }, []);
 
   useEffect(() => {
-    const storedUserId = localStorage.getItem("userId");
-    if (storedUserId) {
-      setUserId(storedUserId);
-      fetchRemainingGenerations(storedUserId);
-    } else {
-      const newUserId = `user_${Math.random().toString(36).substr(2, 9)}`;
-      localStorage.setItem("userId", newUserId);
-      setUserId(newUserId);
-      fetchRemainingGenerations(newUserId);
-    }
+    fetchRemainingGenerations();
   }, [fetchRemainingGenerations]);
 
   const handleSubmit = useCallback(async () => {
@@ -69,7 +58,7 @@ const AIProjectIdeaGenerator = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ projectIdea, userId }),
+        body: JSON.stringify({ projectIdea }),
       });
 
       const data = await response.json();
@@ -111,7 +100,7 @@ const AIProjectIdeaGenerator = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [projectIdea, userId, remainingGenerations]);
+  }, [projectIdea, remainingGenerations]);
 
   const handleClear = useCallback(() => {
     setProjectIdea("");

@@ -3,27 +3,25 @@ import { kv } from "@vercel/kv";
 
 const DAILY_LIMIT = 3;
 
-async function getUserGenerationCount(userId: string): Promise<number> {
-  const key = `user:${userId}:generations:${
-    new Date().toISOString().split("T")[0]
-  }`;
+async function getIPGenerationCount(ip: string): Promise<number> {
+  const key = `ip:${ip}:generations:${new Date().toISOString().split("T")[0]}`;
   const count = (await kv.get(key)) as number;
   return count || 0;
 }
 
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { userId } = body;
+    const ip =
+      request.ip || request.headers.get("x-forwarded-for") || "unknown";
 
-    if (!userId) {
+    if (ip === "unknown") {
       return NextResponse.json(
-        { error: "User ID is required" },
+        { error: "Unable to determine IP address" },
         { status: 400 }
       );
     }
 
-    const currentCount = await getUserGenerationCount(userId);
+    const currentCount = await getIPGenerationCount(ip);
     const remainingGenerations = Math.max(0, DAILY_LIMIT - currentCount);
 
     return NextResponse.json({ remainingGenerations });

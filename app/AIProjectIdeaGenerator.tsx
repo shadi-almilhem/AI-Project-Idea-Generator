@@ -17,7 +17,7 @@ const AIProjectIdeaGenerator = () => {
   const [projectIdea, setProjectIdea] = useState("");
   const [generatedIdea, setGeneratedIdea] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [remainingGenerations, setRemainingGenerations] = useState(3);
+  const [remainingGenerations, setRemainingGenerations] = useState(4);
   const [userId, setUserId] = useState("");
 
   useEffect(() => {

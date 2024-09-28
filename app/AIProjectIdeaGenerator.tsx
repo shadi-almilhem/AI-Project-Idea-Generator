@@ -12,12 +12,13 @@ import {
 } from "@/components/ui/card";
 import { Loader2, Sparkles, Trash2, Copy } from "lucide-react";
 import toast from "react-hot-toast";
+import Link from "next/link";
 
 const AIProjectIdeaGenerator = () => {
   const [projectIdea, setProjectIdea] = useState("");
   const [generatedIdea, setGeneratedIdea] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [remainingGenerations, setRemainingGenerations] = useState(4);
+  const [remainingGenerations, setRemainingGenerations] = useState(3);
   const [userId, setUserId] = useState("");
 
   useEffect(() => {
@@ -172,6 +173,15 @@ const AIProjectIdeaGenerator = () => {
           </div>
         </CardFooter>
       )}
+      <CardDescription className="mx-auto p-6 pt-0">
+        Made By{" "}
+        <Link
+          className="text-black font-semibold"
+          href="https://shadialmilhem.com"
+        >
+          Shadi Al Milhem
+        </Link>
+      </CardDescription>
     </Card>
   );
 };
